@@ -1,0 +1,55 @@
+# ais-elastic configuration file
+#
+# Copy to ais-elastic.yaml (or /etc/ais-elastic/ais-elastic.yaml) and fill in
+# environment-specific values. The live file is gitignored. CLI flags always
+# override YAML values; YAML overrides argparse defaults.
+# Required fields: elasticsearch.url, sources[0].api_key (aisstream.io feed
+# key), sources[0].bounding_boxes.
+
+elasticsearch:
+  # Backend auto-detected from GET / by default. Uncomment to be explicit:
+  # backend_type: elasticsearch      # or "opensearch" to skip the auto-detect probe
+  url: https://elastic:CHANGE_ME@elkstack.example.com:9200
+  # username: elastic                # basic-auth username (alternative to url-embedded creds)
+  # password: CHANGE_ME              # basic-auth password
+  # api_key: ""                      # Elasticsearch API key (ES only; not supported by OpenSearch)
+  index: ais
+  verify_tls: true
+  skip_index_setup: false
+
+sources:
+  - kind: aisstream
+    name: aisstream-reference
+    api_key: "CHANGE_ME"             # aisstream.io feed API key (from https://aisstream.io/authenticate)
+    bounding_boxes:
+      - name: coastal-roi
+        nw: [33.90, -81.00]
+        se: [32.00, -77.50]
+    filter_message_types: []
+    filter_mmsi: []
+    insecure: false
+
+observer:
+  name: ""                             # empty => hostname
+  lat: 32.7765                         # flat form (preferred)
+  lon: -79.9311
+  alt_m: 5
+
+flush:
+  interval_s: 5
+  batch_size: 500
+  max_queue: 50000
+
+local_timezone: America/New_York
+static_cache_path: static_cache.json
+
+alerts:
+  rules_file: /opt/sdr/ais/ais-elastic/alert_rules.json
+  slack:
+    webhook_url: https://hooks.slack.com/services/CHANGE/ME/CHANGE_ME
+    display_name: "AIS Monitor"
+  analytics:
+    base_url: ""
+    domain: ""
+    token: ""
+    insecure: false

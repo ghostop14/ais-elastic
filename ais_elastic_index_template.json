@@ -1,0 +1,252 @@
+{
+  "index_patterns": ["ais-*"],
+  "priority": 500,
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "dynamic": "false",
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "ecs": { "properties": { "version": { "type": "keyword" } } },
+        "message": { "type": "text" },
+        "labels": { "type": "object", "dynamic": true },
+        "event": {
+          "properties": {
+            "kind": { "type": "keyword" },
+            "category": { "type": "keyword" },
+            "type": { "type": "keyword" },
+            "module": { "type": "keyword" },
+            "dataset": { "type": "keyword" },
+            "action": { "type": "keyword" },
+            "severity": { "type": "long" },
+            "created": { "type": "date" }
+          }
+        },
+        "observer": {
+          "properties": {
+            "type": { "type": "keyword" },
+            "vendor": { "type": "keyword" },
+            "product": { "type": "keyword" },
+            "name": { "type": "keyword" },
+            "hostname": { "type": "keyword" },
+            "version": { "type": "keyword" },
+            "geo": {
+              "properties": {
+                "location": { "type": "geo_point" },
+                "altitude": { "type": "float" }
+              }
+            }
+          }
+        },
+        "source": {
+          "properties": {
+            "address": { "type": "keyword" },
+            "user": {
+              "properties": {
+                "name": { "type": "keyword" }
+              }
+            },
+            "geo": {
+              "properties": {
+                "location": { "type": "geo_point" },
+                "name": { "type": "keyword" },
+                "country_name": { "type": "keyword" },
+                "country_iso_code": { "type": "keyword" }
+              }
+            }
+          }
+        },
+        "related": {
+          "properties": {
+            "id": { "type": "keyword" },
+            "hosts": { "type": "keyword" }
+          }
+        },
+        "ais": {
+          "dynamic": "false",
+          "properties": {
+            "message_type": { "type": "keyword" },
+            "message_id": { "type": "byte" },
+            "message_class": { "type": "keyword" },
+            "valid": { "type": "boolean" },
+            "repeat_indicator": { "type": "byte" },
+            "received_at": { "type": "date" },
+            "lag_s": { "type": "float" },
+            "ship_name": { "type": "keyword" },
+            "call_sign": { "type": "keyword" },
+            "imo": { "type": "long" },
+            "destination": { "type": "keyword" },
+            "eta_utc": { "type": "date" },
+            "eta_year_assumed": { "type": "boolean" },
+            "draught_m": { "type": "float" },
+            "ship_type_raw": { "type": "short" },
+            "ship_type": { "type": "keyword" },
+            "ship_type_category": { "type": "keyword" },
+            "nav_status_raw": { "type": "byte" },
+            "nav_status": { "type": "keyword" },
+            "rot_dpm": { "type": "float" },
+            "sog_kt": { "type": "float" },
+            "cog_deg": { "type": "float" },
+            "true_heading_deg": { "type": "short" },
+            "tracking_url": { "type": "keyword" },
+            "mmsi": {
+              "properties": {
+                "value": { "type": "keyword" },
+                "value_int": { "type": "long" },
+                "category": { "type": "keyword" },
+                "mid": { "type": "short" },
+                "flag_country": { "type": "keyword" },
+                "flag_iso_code": { "type": "keyword" }
+              }
+            },
+            "imo_info": {
+              "properties": {
+                "checksum_valid": { "type": "boolean" }
+              }
+            },
+            "position": {
+              "properties": {
+                "valid": { "type": "boolean" },
+                "accuracy_high": { "type": "boolean" },
+                "raim": { "type": "boolean" },
+                "timestamp_quality": { "type": "keyword" },
+                "timestamp_s": { "type": "byte" },
+                "epfd": { "type": "keyword" }
+              }
+            },
+            "dimensions": {
+              "properties": {
+                "to_bow_m": { "type": "short" },
+                "to_stern_m": { "type": "short" },
+                "to_port_m": { "type": "short" },
+                "to_starboard_m": { "type": "short" },
+                "length_m": { "type": "float" },
+                "beam_m": { "type": "float" }
+              }
+            },
+            "range": {
+              "properties": {
+                "distance_nm": { "type": "float" },
+                "distance_km": { "type": "float" },
+                "distance_mi": { "type": "float" },
+                "bearing_deg": { "type": "float" },
+                "bearing_cardinal": { "type": "keyword" }
+              }
+            },
+            "time": {
+              "properties": {
+                "hour_utc": { "type": "byte" },
+                "day_of_week_utc": { "type": "keyword" },
+                "hour_local": { "type": "byte" },
+                "day_of_week_local": { "type": "keyword" }
+              }
+            },
+            "source_feed": {
+              "properties": {
+                "kind": { "type": "keyword" },
+                "vendor": { "type": "keyword" },
+                "feed_id": { "type": "keyword" }
+              }
+            },
+            "roi": {
+              "properties": {
+                "matched": { "type": "boolean" },
+                "name": { "type": "keyword" }
+              }
+            },
+            "distress": {
+              "properties": {
+                "is_distress": { "type": "boolean" },
+                "source": { "type": "keyword" },
+                "severity": { "type": "byte" },
+                "keywords_matched": { "type": "keyword" },
+                "text": {
+                  "type": "text",
+                  "fields": { "keyword": { "type": "keyword", "ignore_above": 1024 } }
+                },
+                "addressed_to_mmsi": { "type": "keyword" }
+              }
+            },
+            "anomaly": {
+              "properties": {
+                "mmsi_invalid_range": { "type": "boolean" },
+                "mmsi_envelope_mismatch": { "type": "boolean" },
+                "mmsi_category_message_mismatch": { "type": "boolean" },
+                "mmsi_suspicious_pattern": { "type": "boolean" },
+                "identity_changed": { "type": "boolean" },
+                "previous_identity": {
+                  "properties": {
+                    "ship_name": { "type": "keyword" },
+                    "call_sign": { "type": "keyword" },
+                    "imo": { "type": "long" },
+                    "ship_type_raw": { "type": "short" }
+                  }
+                },
+                "position_unavailable": { "type": "boolean" },
+                "null_island": { "type": "boolean" },
+                "sog_unavailable": { "type": "boolean" },
+                "sog_implausible_high": { "type": "boolean" },
+                "cog_unavailable": { "type": "boolean" },
+                "true_heading_unavailable": { "type": "boolean" },
+                "rot_unavailable": { "type": "boolean" },
+                "navstatus_speed_mismatch": { "type": "boolean" },
+                "heading_cog_disagree": { "type": "boolean" }
+              }
+            },
+            "vessel": {
+              "properties": {
+                "registry_name": { "type": "keyword" },
+                "registry_type": { "type": "keyword" },
+                "imo": { "type": "long" },
+                "length_m": { "type": "float" },
+                "watchlist": { "type": "boolean" },
+                "fishing": { "type": "boolean" },
+                "naval": { "type": "boolean" },
+                "sanctioned": { "type": "boolean" }
+              }
+            },
+            "aton": {
+              "properties": {
+                "type_raw": { "type": "byte" },
+                "type": { "type": "keyword" },
+                "name": { "type": "keyword" },
+                "name_extension": { "type": "keyword" },
+                "off_position": { "type": "boolean" },
+                "virtual": { "type": "boolean" }
+              }
+            },
+            "sar": {
+              "properties": {
+                "altitude_m": { "type": "integer" }
+              }
+            },
+            "base_station": {
+              "properties": {
+                "time_utc": { "type": "date" }
+              }
+            },
+            "binary": {
+              "properties": {
+                "dac": { "type": "short" },
+                "fi": { "type": "byte" },
+                "addressed_to_mmsi": { "type": "keyword" }
+              }
+            },
+            "static_report": {
+              "properties": {
+                "part_number": { "type": "byte" },
+                "vendor_id_name": { "type": "keyword" },
+                "vendor_unit_model_code": { "type": "integer" },
+                "vendor_serial_number": { "type": "long" },
+                "mothership_mmsi": { "type": "keyword" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

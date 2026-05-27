@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Real config files contain API keys / cluster URLs
+ais-elastic.yaml
+ais-elastic.local.yaml
+*.local.yaml
+
+# Captured sample data — may contain identifiable vessel info
+sample.json
+sample.*.json
+
+# Persistent per-MMSI static-data cache — contains real vessel identifiers
+static_cache.json
+static_cache.json.tmp
+
+# Live alerting rules (contains slack webhook + analytics bearer token)
+alert_rules.json
+
+# Live systemd unit — may carry install-specific paths or environment refs.
+# The committed .example version is the template.
+ais-elastic.service
+
+# Local Claude notes (deployment-specific, not for public eyes).
+CLAUDE.local.md
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.e4p

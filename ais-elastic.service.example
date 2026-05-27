@@ -1,0 +1,33 @@
+# /etc/systemd/system/ais-elastic.service
+#
+# Example systemd unit. Copy to ais-elastic.service (gitignored), adjust if
+# needed, then install with:
+#     sudo cp ais-elastic.service /etc/systemd/system/
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable --now ais-elastic
+#
+# Runtime configuration (Elasticsearch credentials, aisstream API key, observer
+# coordinates, Slack webhook, alert rules, etc.) lives in a YAML config file.
+# The script searches the following paths in order, first match wins:
+#     <script_dir>/ais-elastic.yaml
+#     /etc/ais-elastic/ais-elastic.yaml
+#     /etc/default/ais-elastic.yaml
+# Use --config <path> to override. See ais-elastic.example.yaml for the
+# schema. Lock the live config file to mode 0640 since it contains secrets.
+
+[Unit]
+Description=AIS to Elasticsearch / OpenSearch Bridge (ais-elastic)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sdr/ais/ais-elastic/
+ExecStart=/usr/bin/python3 /opt/sdr/ais/ais-elastic/ais_elastic.py
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

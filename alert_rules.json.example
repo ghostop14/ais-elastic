@@ -1,0 +1,80 @@
+{
+  "_comment": "ais-elastic alerting rules. Each rule lists 'conditions' tokens that must ALL match for the rule to fire (boolean gate). Cooldowns are keyed by (mmsi, rule_name) so a single vessel can't flood notifications. Copy this file to alert_rules.json and edit; the live file is gitignored.",
+  "_condition_tokens": "Available condition tokens: 'distress' (ais.distress.is_distress true); 'distress_critical' / 'distress_high' / 'distress_medium' / 'distress_low' (ais.distress.severity 2/3/4/5); 'anomaly:<flag>' where <flag> is one of mmsi_invalid_range, mmsi_envelope_mismatch, mmsi_suspicious_pattern, mmsi_category_message_mismatch, null_island, sog_implausible_high, navstatus_speed_mismatch, heading_cog_disagree, identity_changed.",
+  "slack": {
+    "enabled": false,
+    "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "display_name": "AIS Monitor",
+    "min_severity": "warning"
+  },
+  "analytics": {
+    "enabled": false,
+    "base_url": "https://YOUR_ALERT_API_HOST:PORT",
+    "domain": "ais",
+    "token": "INSERT_BEARER_TOKEN_HERE",
+    "insecure": false,
+    "min_severity": "info"
+  },
+  "rules": [
+    {
+      "name": "distress",
+      "enabled": true,
+      "alert_label": "AIS distress / mayday signal",
+      "alert_category": "distress",
+      "description": "Vessel transmitted a SART / MOB / EPIRB distress beacon, set its navigational status to AIS-SART (14), or broadcast a safety message containing mayday-class keywords (MAYDAY / SOS / SINKING / ABANDON / etc.).",
+      "conditions": ["distress"],
+      "severity": "critical",
+      "realert_minutes": 15
+    },
+    {
+      "name": "identity_change",
+      "enabled": false,
+      "alert_label": "Vessel identity changed mid-voyage",
+      "alert_category": "deception",
+      "description": "Vessel's ship name, call sign, IMO, or ship type changed between consecutive static broadcasts on the same MMSI. Classic AIS deception pattern — a vessel rewriting its identity mid-voyage.",
+      "conditions": ["anomaly:identity_changed"],
+      "severity": "warning",
+      "realert_minutes": 60
+    },
+    {
+      "name": "mmsi_envelope_mismatch",
+      "enabled": false,
+      "alert_label": "MMSI envelope/body mismatch",
+      "alert_category": "spoofing",
+      "description": "The MMSI in the message envelope does not match the MMSI inside the payload. Indicates a broken transponder, an AIS relay error, or a spoofed packet.",
+      "conditions": ["anomaly:mmsi_envelope_mismatch"],
+      "severity": "warning",
+      "realert_minutes": 60
+    },
+    {
+      "name": "implausible_speed",
+      "enabled": false,
+      "alert_label": "Implausible vessel speed",
+      "alert_category": "data_quality",
+      "description": "Vessel reports speed-over-ground above 60 kt. Implausible for a real surface vessel — almost always a misconfigured transponder or a spoofed value.",
+      "conditions": ["anomaly:sog_implausible_high"],
+      "severity": "warning",
+      "realert_minutes": 60
+    },
+    {
+      "name": "navstatus_speed_mismatch",
+      "enabled": false,
+      "alert_label": "NavStatus says stationary but vessel is moving",
+      "alert_category": "data_quality",
+      "description": "Vessel's navigational status says moored or anchored while it is broadcasting speed-over-ground above 3 kt. Usually benign (forgot to update the nav-status setting) but can flag a vessel masking active operations.",
+      "conditions": ["anomaly:navstatus_speed_mismatch"],
+      "severity": "info",
+      "realert_minutes": 120
+    },
+    {
+      "name": "null_island",
+      "enabled": false,
+      "alert_label": "Vessel reporting (0,0) position",
+      "alert_category": "data_quality",
+      "description": "Vessel reports position (0, 0) — Null Island. Uninitialized GPS, lab test fixture, or deliberate position masking.",
+      "conditions": ["anomaly:null_island"],
+      "severity": "info",
+      "realert_minutes": 120
+    }
+  ]
+}
