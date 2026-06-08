@@ -120,6 +120,22 @@ class Notifier:
 
 
 # ---------------------------------------------------------------------------
+# Deep-link helper
+# ---------------------------------------------------------------------------
+
+def marinetraffic_deep_link(mmsi: str) -> str:
+    """MarineTraffic deep-link by MMSI.
+
+    Opens the vessel's recent track + AIS-reported identity/destination on the
+    free tier. Shared by the Slack notifier (rendered as a <url|text> link) and
+    the analytics alert notifier (sent as alert.external_link.url so the elk-ui
+    panels show a one-click external-info button), keeping the two link forms
+    from drifting.
+    """
+    return f"https://www.marinetraffic.com/en/ais/details/ships/mmsi:{mmsi}"
+
+
+# ---------------------------------------------------------------------------
 # Slack
 # ---------------------------------------------------------------------------
 
@@ -197,11 +213,11 @@ class SlackNotifier(Notifier):
             brg_str = f"{brg:.0f}°{(' ' + card) if card else ''}"
             lines.append(f"Range: {rng:.1f} mi at {brg_str} from observer")
 
-        # MarineTraffic deep-link by MMSI. Tap-friendly on mobile, opens the
-        # vessel's recent track + AIS-reported identity/destination on the free
-        # tier. Slack renders <url|text> as a clickable link.
+        # MarineTraffic deep-link by MMSI. Tap-friendly on mobile; Slack renders
+        # <url|text> as a clickable link. Same deep-link is sent to the
+        # analytics alert API.
         if a.mmsi:
-            mt_url = f"https://www.marinetraffic.com/en/ais/details/ships/mmsi:{a.mmsi}"
+            mt_url = marinetraffic_deep_link(a.mmsi)
             lines.append(f"<{mt_url}|:ship: Track on MarineTraffic>")
 
         # Trigger detail per condition.  Distress is the most operator-facing
@@ -321,6 +337,15 @@ class AnalyticsAlertNotifier(Notifier):
         if alert.source_lat is not None and alert.source_lon is not None:
             body["alert"]["source"] = {"geo": {"location": {
                 "lat": float(alert.source_lat), "lon": float(alert.source_lon)}}}
+
+        # Optional external-info deep-link. elk-ui renders this as a one-click
+        # "open external" button in its alert panels; the server sanitizes the
+        # URL (https/http only) before storing. Same link the Slack message uses.
+        if alert.mmsi:
+            body["alert"]["external_link"] = {
+                "url": marinetraffic_deep_link(alert.mmsi),
+                "label": "Track on MarineTraffic",
+            }
         return body
 
     def _post_with_retry(self, payload: dict, alert: Alert) -> None:
