@@ -626,10 +626,6 @@ def build_document(record: Dict[str, Any],
     if sn:
         ais["ship_name"] = sn
 
-    # Tracking URL pivot
-    if mmsi_str and mmsi_info["category"] in ("ship", "auxiliary_craft", "sar_aircraft"):
-        ais["tracking_url"] = f"https://www.marinetraffic.com/en/ais/details/ships/mmsi:{mmsi_str}"
-
     # Per-family extraction
     msg_class = ais["message_class"]
     if msg_class == "position":
@@ -671,6 +667,13 @@ def build_document(record: Dict[str, Any],
             if cached:
                 for k, v in cached.items():
                     ais.setdefault(k, v)
+
+    # Tracking URL pivot.  After the static-cache stamp so position docs can
+    # use a cached IMO (MarineTraffic only resolves by IMO now).
+    if mmsi_str and mmsi_info["category"] in ("ship", "auxiliary_craft", "sar_aircraft"):
+        url, _site = dec.vessel_tracking_link(mmsi_str, ais.get("imo"))
+        if url:
+            ais["tracking_url"] = url
 
     # Default ship_type_category so map icon dispatch always has a value
     # to match against (renders the neutral "unspecified" icon vs nothing).

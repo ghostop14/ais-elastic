@@ -23,6 +23,8 @@ from typing import Dict, List, Optional
 
 import requests
 
+import ais_decoders as dec
+
 logger = logging.getLogger("ais_elastic.alerts")
 
 _SEVERITY_ORDER: Dict[str, int] = {"info": 0, "warning": 1, "critical": 2}
@@ -82,6 +84,11 @@ class Alert:
     # Per-rule overrides for ECS rule.name / rule.category in the analytics payload.
     alert_label: Optional[str] = None
     alert_category: Optional[str] = None
+    # External vessel-page deep-link (ais_decoders.vessel_tracking_link) and
+    # the site it points at, for the link label.  Shared by the Slack and
+    # analytics notifiers so the two link forms can't drift.
+    tracking_url: Optional[str] = None
+    tracking_site: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -120,22 +127,6 @@ class Notifier:
 
 
 # ---------------------------------------------------------------------------
-# Deep-link helper
-# ---------------------------------------------------------------------------
-
-def marinetraffic_deep_link(mmsi: str) -> str:
-    """MarineTraffic deep-link by MMSI.
-
-    Opens the vessel's recent track + AIS-reported identity/destination on the
-    free tier. Shared by the Slack notifier (rendered as a <url|text> link) and
-    the analytics alert notifier (sent as alert.external_link.url so the elk-ui
-    panels show a one-click external-info button), keeping the two link forms
-    from drifting.
-    """
-    return f"https://www.marinetraffic.com/en/ais/details/ships/mmsi:{mmsi}"
-
-
-# ---------------------------------------------------------------------------
 # Slack
 # ---------------------------------------------------------------------------
 
@@ -161,7 +152,7 @@ class SlackNotifier(Notifier):
             blocks.append(self._format_alert_block(a))
 
         # `unfurl_links: False` suppresses Slack's automatic preview cards for
-        # the MarineTraffic links in each alert block — those would otherwise
+        # the vessel-tracker links in each alert block — those would otherwise
         # clutter the channel with full vessel-detail panels.
         return {
             "username": self._display_name,
@@ -213,12 +204,11 @@ class SlackNotifier(Notifier):
             brg_str = f"{brg:.0f}°{(' ' + card) if card else ''}"
             lines.append(f"Range: {rng:.1f} mi at {brg_str} from observer")
 
-        # MarineTraffic deep-link by MMSI. Tap-friendly on mobile; Slack renders
+        # Vessel-tracker deep-link. Tap-friendly on mobile; Slack renders
         # <url|text> as a clickable link. Same deep-link is sent to the
         # analytics alert API.
-        if a.mmsi:
-            mt_url = marinetraffic_deep_link(a.mmsi)
-            lines.append(f"<{mt_url}|:ship: Track on MarineTraffic>")
+        if a.tracking_url:
+            lines.append(f"<{a.tracking_url}|:ship: Track on {a.tracking_site}>")
 
         # Trigger detail per condition.  Distress is the most operator-facing
         # so it gets explicit source + keywords + text snippet; anomaly rules
@@ -341,10 +331,10 @@ class AnalyticsAlertNotifier(Notifier):
         # Optional external-info deep-link. elk-ui renders this as a one-click
         # "open external" button in its alert panels; the server sanitizes the
         # URL (https/http only) before storing. Same link the Slack message uses.
-        if alert.mmsi:
+        if alert.tracking_url:
             body["alert"]["external_link"] = {
-                "url": marinetraffic_deep_link(alert.mmsi),
-                "label": "Track on MarineTraffic",
+                "url": alert.tracking_url,
+                "label": f"Track on {alert.tracking_site}",
             }
         return body
 
@@ -787,6 +777,7 @@ class AlertEngine:
         src_geo = ((doc.get("source") or {}).get("geo") or {}).get("location") or {}
         src_lat = src_geo.get("lat")
         src_lon = src_geo.get("lon")
+        tracking_url, tracking_site = dec.vessel_tracking_link(mmsi, ais_block.get("imo"))
 
         return Alert(
             rule_name=rule_name,
@@ -810,4 +801,6 @@ class AlertEngine:
             source_lon=float(src_lon) if src_lon is not None else None,
             alert_label=rule.get("alert_label"),
             alert_category=rule.get("alert_category"),
+            tracking_url=tracking_url,
+            tracking_site=tracking_site,
         )

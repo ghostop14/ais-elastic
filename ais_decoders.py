@@ -776,6 +776,28 @@ def imo_checksum_valid(imo):
 
 
 # ---------------------------------------------------------------------------
+# External vessel-tracker deep-link
+# ---------------------------------------------------------------------------
+
+def vessel_tracking_link(mmsi, imo=None):
+    """Return (url, site_name) for an external vessel page, or (None, None).
+
+    MarineTraffic no longer resolves MMSI-keyed URLs (any ``mmsi:`` path
+    silently redirects to the viewer's last map view); only ``imo:`` (and its
+    internal ``shipid:``) still reach a vessel page.  So: MarineTraffic by IMO
+    when the IMO's check digit verifies (bogus IMOs land on ``shipid:null``),
+    else MyShipTracking, which resolves by MMSI alone — the only option for
+    the Class B / small craft that never carry an IMO.
+    """
+    if imo is not None and imo_checksum_valid(imo):
+        return (f"https://www.marinetraffic.com/en/ais/details/ships/imo:{int(imo)}",
+                "MarineTraffic")
+    if mmsi:
+        return f"https://www.myshiptracking.com/vessels/mmsi-{mmsi}", "MyShipTracking"
+    return None, None
+
+
+# ---------------------------------------------------------------------------
 # Time parsing — aisstream.io emits Go time.String() format
 # ---------------------------------------------------------------------------
 

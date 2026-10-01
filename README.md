@@ -104,7 +104,7 @@ write alias + rollover** on both Elasticsearch and OpenSearch.
 | `ais.cog_deg` | float | degrees true |
 | `ais.true_heading_deg` | short | (511 sentinel dropped) |
 | `ais.rot_dpm` | float | decoded deg/min |
-| `ais.tracking_url` | keyword | marinetraffic.com pivot |
+| `ais.tracking_url` | keyword | vessel-page pivot: MarineTraffic by IMO when known and check-digit valid, else MyShipTracking by MMSI |
 
 ### Sub-objects
 
